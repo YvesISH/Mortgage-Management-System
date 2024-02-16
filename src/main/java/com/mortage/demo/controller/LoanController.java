@@ -10,11 +10,11 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/loans")
 public class LoanController {
-
     private final LoanService loanService;
 
     @Autowired
@@ -35,7 +35,6 @@ public class LoanController {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         }
     }
-
     static class ErrorResponse {
         private final String error;
 
@@ -45,6 +44,32 @@ public class LoanController {
 
         public String getError() {
             return error;
+        }
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteLoan(@PathVariable Long id) {
+        try {
+            loanService.deleteLoanById(id);
+            return ResponseEntity.ok().build();
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/edit/{id}")
+    public ResponseEntity<?> updateLoan(@PathVariable Long id, @Valid @RequestBody Loan loan, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
+        }
+
+        try {
+            Loan updatedLoan = loanService.updateLoan(id, loan);
+            return ResponseEntity.ok(updatedLoan);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 }

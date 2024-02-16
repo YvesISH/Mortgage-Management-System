@@ -5,6 +5,8 @@ import com.mortage.demo.Repository.LoanRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.NoSuchElementException;
+
 @Service
 public class LoanService {
 
@@ -44,5 +46,23 @@ public class LoanService {
 
         return principal * (monthlyInterest * Math.pow(1 + monthlyInterest, numberOfPayments)) /
                 (Math.pow(1 + monthlyInterest, numberOfPayments) - 1);
+    }
+
+    public void deleteLoanById(Long id){
+        loanRepo.deleteById(id);
+    }
+
+    public Loan updateLoan(Long id, Loan updatedLoan){
+        Loan existingLoan = loanRepo.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Loan not found with id: " + id));
+
+        existingLoan.setPrincipal(updatedLoan.getPrincipal());
+        existingLoan.setAnnualInterestRate(updatedLoan.getAnnualInterestRate());
+        existingLoan.setYears(updatedLoan.getYears());
+
+        double mortgage = calculateMortgage(existingLoan.getPrincipal(), existingLoan.getAnnualInterestRate(), existingLoan.getYears());
+        existingLoan.setMortgage(mortgage);
+
+        return loanRepo.save(existingLoan);
     }
 }
